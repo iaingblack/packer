@@ -2,6 +2,8 @@ package docker
 
 import (
 	"fmt"
+	"runtime"
+	"strings"
 	"github.com/mitchellh/multistep"
 	"github.com/mitchellh/packer/packer"
 )
@@ -16,37 +18,40 @@ func (s *StepRun) Run(state multistep.StateBag) multistep.StepAction {
 	tempDir := state.Get("temp_dir").(string)
 	ui := state.Get("ui").(packer.Ui)
 
+// 	Current Behaviour
+//  ==> docker: Stderr: docker: Error response from daemon: invalid bind mount spec "C:\\Users\\azureuser\\AppData\\Roaming\\packer.d\\tmp\\packer-docker846652819:/packer-files":
+// 	Amended Behaviour - "-v c:/xyx/packer.tmp:/packer"
+// -v C:/temp/:C:/temp/
+//  docker run -v c:/temp/:c:/packer-files/ -d -i -t microsoft/windowsservercore cmd /c
+//  docker run -d -i -t microsoft/windowsservercore cmd /c
+	if runtime.GOOS == "windows" {
+		ui.Say("___________________________+_______________________________")
+		tempDir = strings.Replace(tempDir, "\\", "/", -1)
+		tempDir = tempDir + "/"
+		ui.Say("_DETECTED WINDOWS, REVERSING SLASHES IN PATH TO THIS______")	
+		ui.Say("_"+tempDir)
+		ui.Say("__________________________________________________________")
+	}
 	runConfig := ContainerConfig{
 		Image:      config.Image,
 		RunCommand: config.RunCommand,
 		Volumes:    make(map[string]string),
 		Privileged: config.Privileged,
 	}
-
+	//ui.Say(runConfig.Volumes)
 	for host, container := range config.Volumes {
 		runConfig.Volumes[host] = container
+		ui.Say(" - - - - - - - - - - -  I NEVER GET HERE - - - - - - -")
 	}
-	runConfig.Volumes[tempDir] = "/packer-files"
-
-	ui.Say("Starting docker container...")
-	containerId, err := driver.StartContainer(&runConfig)
-//	This is a fix of sorts I believe. Need to amend the object above but need to research how
-// 	package main
-// 	import "fmt"
-// 	import "runtime"
-// 	import "strings"
-// 	func main() {
-// 	    //Current Behaviour - "-v c:\xyx\packer.tmp:/packer"
-// 	    //Amended Behaviour - "-v c:/xyx/packer.tmp:/packer"
-// 	    testpath := "C:\\Users\\azureuser\\AppData\\Roaming\\packer.d\\tmp\\packer-docker807709699"
-// 	    if runtime.GOOS == "windows" {
-// 		fmt.Println(testpath)
-// 		result := strings.Replace(testpath, "\\", "/", -1)
-// 		fmt.Println(result)
-// 	    }
-// 	}
+	if runtime.GOOS == "windows" {
+		runConfig.Volumes[tempDir] = "c:/packer-files/"
+	} else {
+		runConfig.Volumes[tempDir] = "/packer-files"
+	}
 
 	
+	ui.Say("Starting docker container...")
+	containerId, err := driver.StartContainer(&runConfig)
 	if err != nil {
 		err := fmt.Errorf("Error running container: %s", err)
 		state.Put("error", err)
