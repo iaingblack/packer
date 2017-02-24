@@ -30,6 +30,23 @@ func (s *StepRun) Run(state multistep.StateBag) multistep.StepAction {
 
 	ui.Say("Starting docker container...")
 	containerId, err := driver.StartContainer(&runConfig)
+//	This is a fix of sorts I believe. Need to amend the object above but need to research how
+// 	package main
+// 	import "fmt"
+// 	import "runtime"
+// 	import "strings"
+// 	func main() {
+// 	    //Current Behaviour - "-v c:\xyx\packer.tmp:/packer"
+// 	    //Amended Behaviour - "-v c:/xyx/packer.tmp:/packer"
+// 	    testpath := "C:\\Users\\azureuser\\AppData\\Roaming\\packer.d\\tmp\\packer-docker807709699"
+// 	    if runtime.GOOS == "windows" {
+// 		fmt.Println(testpath)
+// 		result := strings.Replace(testpath, "\\", "/", -1)
+// 		fmt.Println(result)
+// 	    }
+// 	}
+
+	
 	if err != nil {
 		err := fmt.Errorf("Error running container: %s", err)
 		state.Put("error", err)
