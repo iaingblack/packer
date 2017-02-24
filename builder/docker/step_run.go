@@ -24,6 +24,9 @@ func (s *StepRun) Run(state multistep.StateBag) multistep.StepAction {
 // -v C:/temp/:C:/temp/
 //  docker run -v c:/temp/:c:/packer-files/ -d -i -t microsoft/windowsservercore cmd /c
 //  docker run -d -i -t microsoft/windowsservercore cmd /c
+// Seem to get this error running it sadly...
+// Stderr: docker: Error response from daemon: hcsshim::ActivateLayer failed in Win32: The file or directory is corrupted and unreadable. (0x570) 
+// docker: Run command: docker run -v C:/Users/azureuser/AppData/Roaming/packer.d/tmp/packer-docker453347183/:c:/packer-files/ -d -i -t microsoft/windowsservercore cmd /c
 	if runtime.GOOS == "windows" {
 		ui.Say("___________________________+_______________________________")
 		tempDir = strings.Replace(tempDir, "\\", "/", -1)
